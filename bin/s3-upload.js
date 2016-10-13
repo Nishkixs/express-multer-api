@@ -11,8 +11,19 @@ const readFile = (filename) => {
     fs.readFile(filename, (error, data)=> {
       if(error) {
         return console.error(error);
-      }
-}
-}
+    }
+    resolve(data);
+
+    });
+  });
+};
+
+const logMessage = (data) => {
   console.log(`${filename} is ${data.length} bytes long`);
-});
+};
+
+readFile(filename)
+.then(logMessage)
+.catch(console.error);
+
+};
