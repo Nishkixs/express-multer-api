@@ -10,7 +10,7 @@ const readFile = (filename) => {
   return new Promise((resolve, reject) => {
     fs.readFile(filename, (error, data)=> {
       if(error) {
-        return console.error(error);
+        reject(error);
     }
     resolve(data);
 
