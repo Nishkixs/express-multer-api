@@ -31,14 +31,37 @@ const parseFile = (fileBuffer) => {
   return file;
 };
 
+const upload = (file) => {
+  // get bucket name from aws console
+  const options = {
+    Bucket: 'nishon',
+    // attach filebuffer as a stream to send to s3
+    Body: file.data,
+    // allow anyoing to acces to url of the uploaded file
+    ACL: 'public-read',
+    // tell s3 what the mime-tpe is
+    contentType: file.mime,
+    // pick a filename for S3 to use for the uplaod
+    Key: `test/test.${file.ext}`
+  };
 
-const logMessage = (file) => {
- console.log(`${filename} is ${file.data.length} bytes long ${file.mime}`);
+  // don't actually upload just pass the data down the promise chain
+  return Promise.resolve(options);
 };
+
+const logMessage = (upload) => {
+  // get rid of the stream for now so I can log the rest of my options
+  // in the terminal without seeing the steram
+  delete upload.Body;
+ console.log(`the upload options are ${JSON.stringify(upload)}`);
+};
+
+
 
 
 readFile(filename)
 .then(parseFile)
+.then(upload)
 .then(logMessage)
 .catch(console.error)
 ;
