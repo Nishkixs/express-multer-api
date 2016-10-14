@@ -1,12 +1,14 @@
 'use strict';
 
 const controller = require('lib/wiring/controller');
-
-const multer =require('app/middleware').multer;
+// use multer
+const multer = require('app/middleware').multer;
 const models = require('app/models');
 const Upload = models.upload;
 
-//const authenticate = require('./concerns/authenticate');
+const upload = require('lib/s3-upload').upload;
+
+// const authenticate = require('./concerns/authenticate');
 
 const index = (req, res, next) => {
   Upload.find()
@@ -24,55 +26,26 @@ const create = (req, res, next) => {
   // let upload = Object.assign(req.body.upload, {
   //   _owner: req.currentUser._id,
   // });
-  let upload = {
-    file: req.file,
-    comment: req.body.upload.comment,
-  };
-  return Upload.create(upload);
-};
-// res.json({ upload });
-//
-// //   Upload.create(upload)
-// //     .then(upload => res.json({ upload }))
-// //     .catch(err => next(err));
-// // };
-//
-// // const update = (req, res, next) => {
-// //   let search = { _id: req.params.id, _owner: req.currentUser._id };
-// //   Upload.findOne(search)
-// //     .then(upload => {
-// //       if (!upload) {
-// //         return next();
-// //       }
-//
-//       delete req.body._owner;  // disallow owner reassignment.
-//       return upload.update(req.body.upload)
-//         .then(() => res.sendStatus(200));
-//     })
-//     .catch(err => next(err));
-// };
 
-// const destroy = (req, res, next) => {
-//   let search = { _id: req.params.id, _owner: req.currentUser._id };
-//   Upload.findOne(search)
-//     .then(upload => {
-//       if (!upload) {
-//         return next();
-//       }
-//
-//       return upload.remove()
-//         .then(() => res.sendStatus(200));
-//     })
-//     .catch(err => next(err));
-// };
+  upload(req.file.buffer)
+  .then((response)=>{
+    return {
+      location: response.Location, // from s3
+      comment: req.body.upload.comment,
+    };
+  })
+  .then(upload => Upload.create(upload))
+  .then(upload => res.json({ upload }))
+  .catch(error => next(error))
+  ;
+};
 
 module.exports = controller({
   index,
   show,
   create,
-  //update,
-  //destroy
-}, { before: [
-  //{ method: authenticate, except: ['index', 'show'] },
-  {method: multer.single('upload[file]'), only: ['create']}
+  }, { before: [
+  // { method: authenticate, except: ['index', 'show'] },
+  // like HTML syntax(upload[file])
+  { method: multer.single('upload[file]'), only: ['create']},
 ], });
