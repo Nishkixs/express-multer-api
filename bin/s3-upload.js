@@ -1,9 +1,12 @@
 'use strict';
 
+require('dotenv').config();
+
 const fs = require('fs');
 
 const filename = process.argv[2] || '';
 const fileType = require('file-type');
+const AWS = require('aws-sdk');
 
 const readFile = (filename) => {
  return new Promise((resolve, reject) => {
@@ -31,6 +34,14 @@ const parseFile = (fileBuffer) => {
   return file;
 };
 
+const s3 = new AWS.S3({
+  credentials:{
+    accessKeyId:process.env.AWS_ACCESS_KEY,
+    secretAccessKey:process.env.AWS_SECRET_ACCESS_KEY,
+  }
+});
+
+
 const upload = (file) => {
   // get bucket name from aws console
   const options = {
@@ -45,15 +56,21 @@ const upload = (file) => {
     Key: `test/test.${file.ext}`
   };
 
-  // don't actually upload just pass the data down the promise chain
-  return Promise.resolve(options);
+  return new Promise ((resolve, reject) => {
+    s3.upload(options, (error, data) => {
+      if (error) {
+        reject(error);
+      }
+    resolve(data);
+    });
+  });
 };
 
-const logMessage = (upload) => {
+const logMessage = (response) => {
   // get rid of the stream for now so I can log the rest of my options
   // in the terminal without seeing the steram
-  delete upload.Body;
- console.log(`the upload options are ${JSON.stringify(upload)}`);
+ console.log(`the the response from AWS was  ${JSON.stringify(response)}`);
+
 };
 
 
